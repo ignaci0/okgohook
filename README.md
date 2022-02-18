@@ -1,8 +1,10 @@
 # ignaci0/okgohook
 
---------------------------------------------------------------------------------
-This module, composed by two packages provides the means to implement webhooks
-Actions On Google can send to a running server.
+This module, composed by two packages provides the means to implement fulfillment
+service webhooks so Actions On Google can send to a running server.
+
+It's important to remark this module **does not** implement [DialogFlow fulfillments](https://developers.google.com/assistant/df-asdk/overview)
+but fulfillment services for the [new conversational actions](https://developers.google.com/assistant/conversational/build).
 
 This module's features include:
 
@@ -14,6 +16,11 @@ http.ServeMux (and other modules such as gorilla/mux)
 * It supports request verification by validating JWT received and the intended audience
 * Additional matching rules out of the box: locale and handler
 * Matcher interface to introduce custom request matchers
+
+
+To get started building your own actions [this is the place to go](https://developers.google.com/assistant/conversational/build).
+
+Since actions can be run in alfa channel, this is quite convenient to run _home server's automated tasks_.
 
 ---
 
@@ -76,6 +83,7 @@ webhookRouter.HandleIntent("hello", func (req *aog.FulfillmentRequest) *aog.Fulf
 
 ```go
 webhookRouter := okgohook.NewRouter()
+
 webhookRouter.HandleIntent("hello", func (req *aog.FulfillmentRequest) *aog.FulfillmentResponse { }).WithHandler("world").WithLocaleLike("EN")
 webhookRouter.HandleIntent("hello", func (req *aog.FulfillmentRequest) *aog.FulfillmentResponse { }).WithHandler("world").WithLocaleLike("ES")
 ```
@@ -88,3 +96,14 @@ Currently it is not possible to verify the token without audience verification.
 webhookRouter := okgohook.NewRouter().Authorize("my-app")
 ``` 
 
+When the newly created router is provided with an audience, a goroutine is launched
+to retrieve and keep up to date the signing token certificates. This means the server
+shall require access to the internet to retrieve them.
+
+## TO-DOs/Roadmap
+
+* Remove unnecessary logging and add a logger facility/middlewares
+* Implement missing response types
+* Change the certificates verifications to a newer keys url
+* Add proxy support for certificates retrieval
+* Find a way to get rid off the aog package by autogenerating code for from the gRPC specification (if ever found)
