@@ -17,6 +17,7 @@ package okgohook
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -96,7 +97,8 @@ func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	//Handle 404
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, `{"status": { "code": 404, "message": "No matching handler for intent" } }`)
 }
 
 // Authorizes requests against the given audience. It also enables token verification
