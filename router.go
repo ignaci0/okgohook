@@ -99,7 +99,8 @@ func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//Handle 404
 }
 
-// Authorizes requests against the given audience
+// Authorizes requests against the given audience. It also enables token verification
+// and it launches a certificate retrieval goroutine
 func (this *Router) Authorize(aud string) *Router {
 	initialize.Do(func() {
 		update_keys()
