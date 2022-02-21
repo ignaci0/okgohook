@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -57,6 +58,9 @@ func NewRouter() *Router {
 			},
 		},
 	}
+}
+
+func (this *Router) Proxy(url string) {
 }
 
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -102,19 +106,33 @@ func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // Authorizes requests against the given audience. It also enables token verification
-// and it launches a certificate retrieval goroutine
-func (this *Router) Authorize(aud string) *Router {
+// and it launches a certificate retrieval goroutine. Only one proxy is accepted and if
+// provided it shall be used to retrieve the certificates through it
+func (this *Router) Authorize(aud string, proxy ...string) *Router {
 	initialize.Do(func() {
-		update_keys()
+		if len(proxy) == 1 {
+			update_keys(&proxy[0])
+		} else {
+			update_keys(nil)
+		}
 	})
 	this.aud = aud
 	return this
 }
 
-func update_keys() {
+func update_keys(proxy *string) {
 	var cache_timeout int = 3600
-	resp, err := http.Get(google_jwks_uri)
+
+	client := get_http_client(proxy)
+	req, err := http.NewRequest("GET", google_jwks_uri, nil)
+
 	if err != nil {
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Couldn't retrieve certificates from google: [", err, "], token authorizations will fail")
 		return
 	}
 
@@ -137,7 +155,7 @@ func update_keys() {
 		select {
 		case <-time.After(time.Duration(cache_timeout-1) * time.Second):
 			cancel()
-			update_keys()
+			update_keys(proxy)
 		case <-ctx.Done():
 			return
 		}
@@ -145,6 +163,19 @@ func update_keys() {
 	}()
 
 	log.Println("Google certificates updated; Cache's timeout is", cache_timeout)
+}
+
+func get_http_client(proxy *string) *http.Client {
+	if proxy != nil {
+		proxyUrl, err := url.Parse(*proxy)
+		if err != nil {
+			return &http.Client{}
+		}
+
+		transport := &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+		return &http.Client{Transport: transport}
+	}
+	return &http.Client{}
 }
 
 func (this *Router) authorized(token string) bool {
