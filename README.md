@@ -105,5 +105,5 @@ shall require access to the internet to retrieve them.
 * Remove unnecessary logging and add a logger facility/middlewares
 * Implement missing response types
 * Change the certificates verifications to a newer keys url
-* Add proxy support for certificates retrieval
+* ~~Add proxy support for certificates retrieval~~
 * Find a way to get rid off the aog package by autogenerating code for from the [gRPC specification](https://github.com/actions-on-google/assistant-conversation-nodejs/tree/master/src/api) 
